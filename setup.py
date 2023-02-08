@@ -107,12 +107,12 @@ class CMakeBuild(build_ext):
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
-    name="pyOrbSlam",
+    name="pyorbslam3",
     version="1.0.0",
     author="Jan-Hendrik Meusener",
-    description="python bindings for pyOrbSlam",
+    description="python bindings for ORB_SLAM3",
     long_description="",
-    ext_modules=[CMakeExtension("pyOrbSlam"),],
+    ext_modules=[CMakeExtension("pyorbslam3")],
     include_dirs=[np.get_include()],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False

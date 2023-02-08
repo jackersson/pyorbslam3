@@ -1,7 +1,6 @@
- 
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -14,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <memory>
 
 #include <exception>
 #include <typeinfo>
@@ -42,9 +42,9 @@ class PyOrbSlam
 {
 public:
   // Create SLAM system. It initializes all system threads and gets ready to process frames.
-  ORB_SLAM3::System* slam; 
-  ORB_SLAM3::Converter* conv;
-  //PyOrbSlam(){}; 
+  std::unique_ptr<ORB_SLAM3::System> slam;
+  std::unique_ptr<ORB_SLAM3::Converter> conv;
+  //PyOrbSlam(){};
   PyOrbSlam(std::string path_to_vocabulary, std::string path_to_settings, std::string sensorType, bool useViewer)
 	{
     ORB_SLAM3::System::eSensor sensor;
@@ -67,8 +67,8 @@ public:
       sensor = ORB_SLAM3::System::IMU_RGBD;
     }
         try{
-		  slam = new ORB_SLAM3::System(path_to_vocabulary,path_to_settings,sensor, useViewer);
-      conv = new ORB_SLAM3::Converter();
+		  slam = std::make_unique<ORB_SLAM3::System>(path_to_vocabulary,path_to_settings,sensor, useViewer);
+      conv = std::make_unique<ORB_SLAM3::Converter>();
       }
       catch (const std::exception& e)
       {
@@ -84,8 +84,8 @@ public:
   ~PyOrbSlam(){
     slam->Shutdown();
     this_thread::sleep_for(chrono::milliseconds(5000));
-    delete &slam;
-    delete &conv;
+    // delete &slam;
+    // delete &conv;
   };
 
   void Shutdown(){
@@ -110,7 +110,7 @@ public:
   };
 
   void ActivateLocalizationMode(){slam->ActivateLocalizationMode();};
-    
+
   void DeactivateLocalizationMode(){slam->DeactivateLocalizationMode();};
 
   void Reset(){slam->Reset();};
@@ -298,7 +298,7 @@ public:
         throw runtime_error(e.what());
       }
   }
-            
+
   cv::Mat process(cv::Mat &in_image, const double &seconds){
     cv::Mat camPose;
     Sophus::SE3f camPoseReturn;
@@ -321,14 +321,14 @@ public:
   }
 };
 
-PYBIND11_MODULE(pyOrbSlam, m)
+PYBIND11_MODULE(pyorbslam3, m)
 {
 	NDArrayConverter::init_numpy();
   py::class_<Debug>(m, "Debug")
     .def(py::init())
     .def("getPID",&Debug::getPID);
-    
-	py::class_<PyOrbSlam>(m, "OrbSlam")
+
+	py::class_<PyOrbSlam>(m, "System")
     //.def(py::init())
 		.def(py::init<string,string, string,bool>(), py::arg("path_to_vocabulary"), py::arg("path_to_settings"), py::arg("sensorType")="Mono", py::arg("useViewer")=false)
 		.def("saveTrajectory", &PyOrbSlam::saveTrajectory, py::arg("filePath"))
