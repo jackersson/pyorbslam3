@@ -157,6 +157,12 @@ public:
         return vpMaps.size();
     }
 
+    int getCurrentMapId()
+    {
+        ORB_SLAM3::Map* pActiveMap = slam->mpAtlas->GetCurrentMap();
+        return pActiveMap->GetId();
+    }
+
     cv::Mat GetTrackedMapReferencePointsOfMap(int mapNr)
     {
         try
@@ -484,15 +490,15 @@ public:
         try
         {
             ORB_SLAM3::Map* pActiveMap = slam->mpAtlas->GetCurrentMap(); 
-           
+
+            int numDims = 4; // x, y, z, point_idx
             if (!pActiveMap)
-                return cv::Mat(1, 3, CV_32FC1, 0.0f);
+                return cv::Mat(1, numDims, CV_32FC1, 0.0f);
             vector<ORB_SLAM3::KeyFrame*> vpKFs = pActiveMap->GetAllKeyFrames();
 			// std::cout << "vpKFs.size() " << vpKFs.size() << std::endl;
 			if (vpKFs.empty())
-                return cv::Mat(1, 3, CV_32FC1, 0.0f);
+                return cv::Mat(1, numDims, CV_32FC1, 0.0f);
 			
-
             sort(vpKFs.begin(), vpKFs.end(), ORB_SLAM3::KeyFrame::lId);
 
 			ORB_SLAM3::KeyFrame* pKF = vpKFs.back();
@@ -500,9 +506,9 @@ public:
 			// std::cout << "vpMPs.size() " << vpMPs.size() << std::endl;
 
 			if (vpMPs.empty())
-                return cv::Mat(1, 3, CV_32FC1, 0.0f);
+                return cv::Mat(1, numDims, CV_32FC1, 0.0f);
 
-            cv::Mat positions = cv::Mat(vpMPs.size(), 3, CV_32FC1, 0.0f);
+            cv::Mat positions = cv::Mat(vpMPs.size(), numDims, CV_32FC1, 0.0f);
             for (size_t i = 0, iend = vpMPs.size(); i < iend; i++)
             {
 				if (vpMPs[i] == NULL)
@@ -515,6 +521,7 @@ public:
                 positions.at<float>(i, 0) = pos(0);
                 positions.at<float>(i, 1) = pos(1);
                 positions.at<float>(i, 2) = pos(2);
+                positions.at<float>(i, 3) = static_cast<float>(vpMPs[i]->mnId);
             }
             return positions;
             
@@ -627,5 +634,6 @@ PYBIND11_MODULE(pyorbslam3, m)
         .def("getNrOfMaps", &PyOrbSlam::getNrOfMaps)
         .def("getKeyFramesOfMap", &PyOrbSlam::getKeyFramesOfMap,
              py::arg("mapNr") = -1, py::arg("withIMU") = false)
+        .def("getCurrentMapId", &PyOrbSlam::getCurrentMapId)
         .def("shutdown", &PyOrbSlam::Shutdown);
 };
