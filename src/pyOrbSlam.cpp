@@ -538,6 +538,10 @@ public:
         }
     }
 
+    void SaveAtlas(string filename)
+    {
+        slam->SaveAtlas(filename);
+    }
 };
 
 PYBIND11_MODULE(pyorbslam3, m)
@@ -635,5 +639,6 @@ PYBIND11_MODULE(pyorbslam3, m)
         .def("getKeyFramesOfMap", &PyOrbSlam::getKeyFramesOfMap,
              py::arg("mapNr") = -1, py::arg("withIMU") = false)
         .def("getCurrentMapId", &PyOrbSlam::getCurrentMapId)
+        .def("SaveAtlas", &PyOrbSlam::SaveAtlas, py::arg("filename"))
         .def("shutdown", &PyOrbSlam::Shutdown);
 };
